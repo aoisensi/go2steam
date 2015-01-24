@@ -31,6 +31,11 @@ func main() {
 	}()
 
 	var user, pass string
+	fmt.Print("Username > ")
+	fmt.Scanln(&user)
+	fmt.Print("Password > ")
+	fmt.Scanln(&pass)
+	steam.SetLogin(user, pass)
 
 	var errl error
 	for {
@@ -46,7 +51,7 @@ func main() {
 			var ans string
 			fmt.Scanln(&ans)
 			cap.SetAnswer(ans)
-			errl = steam.LoginCaptcha(user, pass, cap)
+			steam.SetLoginCaptcha(cap)
 		case *go2steam.ErrorLoginEMailAuth:
 			fmt.Printf("Valve sent email to \"%s\" domain.\n", errt.Domain)
 			var code, device string
@@ -54,15 +59,13 @@ func main() {
 			fmt.Scanln(&code)
 			fmt.Print("Device Name > ")
 			fmt.Scanln(&device)
-			errl = steam.LoginGuard(user, pass, code, device)
+			steam.SetLoginGuard(code, device)
 		default:
-			fmt.Print("Username > ")
-			fmt.Scanln(&user)
-			fmt.Print("Password > ")
-			fmt.Scanln(&pass)
-			errl = steam.Login(user, pass)
+			if errl != nil {
+				panic(errl)
+			}
 		}
-
+		errl = steam.Login()
 		if errl == nil {
 			break
 		}

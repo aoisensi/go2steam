@@ -70,35 +70,23 @@ type jsonLoginDoLogin struct {
 	RequiresTwofactor bool `json:"requires_twofactor"`
 }
 
-func (s *steam) Login(username, password string) error {
-	v := url.Values{
-		"username": {username},
-		"password": {password},
-	}
-	return s.login(v)
+func (s *steam) SetLogin(username, password string) {
+	s.lgnv.Set("username", username)
+	s.lgnv.Set("password", password)
 }
 
-func (s *steam) LoginCaptcha(username, password string, captcha Captcha) error {
-	v := url.Values{
-		"username":     {username},
-		"password":     {password},
-		"captchagid":   {captcha.GetGID()},
-		"captcha_text": {captcha.GetAnswer()},
-	}
-	return s.login(v)
+func (s *steam) SetLoginCaptcha(captcha Captcha) {
+	s.lgnv.Set("captchagid", captcha.GetGID())
+	s.lgnv.Set("captcha_text", captcha.GetAnswer())
 }
 
-func (s *steam) LoginGuard(username, password, code, name string) error {
-	v := url.Values{
-		"username":          {username},
-		"password":          {password},
-		"emailauth":         {code},
-		"loginfriendlyname": {name},
-	}
-	return s.login(v)
+func (s *steam) LoginGuard(code, name string) {
+	s.lgnv.Set("emailauth", code)
+	s.lgnv.Set("loginfriendlyname", name)
 }
 
-func (s *steam) login(v url.Values) error {
+func (s *steam) Login() error {
+	v := s.lgnv
 	password, ts, err := s.loginGetRSA(v.Get("username"), v.Get("password"))
 	if err != nil {
 		return err
