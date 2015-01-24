@@ -80,7 +80,7 @@ func (s *steam) SetLoginCaptcha(captcha Captcha) {
 	s.lgnv.Set("captcha_text", captcha.GetAnswer())
 }
 
-func (s *steam) LoginGuard(code, name string) {
+func (s *steam) SetLoginGuard(code, name string) {
 	s.lgnv.Set("emailauth", code)
 	s.lgnv.Set("loginfriendlyname", name)
 }
