@@ -16,6 +16,8 @@ type Steam interface {
 	LoginGuard(string, string, string, string) error
 	Cookies() []byte
 	SetCookies([]byte)
+
+	LoadGroupFromCustom(string) (Group, error)
 }
 
 func NewSteam() Steam {
