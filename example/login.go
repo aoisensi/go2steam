@@ -2,14 +2,34 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/k0kubun/pp"
+	"io/ioutil"
+	"os"
 
 	go2steam ".."
 )
 
+const (
+	confCookie = "cookie.conf"
+)
+
 func main() {
 	steam := go2steam.NewSteam()
+
+	cookie, err := os.Open(confCookie)
+	if err == nil {
+		data, _ := ioutil.ReadAll(cookie)
+		steam.SetCookies(data)
+		defer cookie.Close()
+	} else {
+		fmt.Println(err)
+	}
+
+	defer func() {
+		f, _ := os.Create(confCookie)
+		f.Write(steam.Cookies())
+		defer f.Close()
+	}()
+
 	var user, pass string
 
 	var errl error
@@ -46,7 +66,5 @@ func main() {
 		if errl == nil {
 			break
 		}
-
 	}
-	pp.Println(steam.Cookie())
 }

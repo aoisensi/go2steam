@@ -99,24 +99,23 @@ func (s *steam) LoginGuard(username, password, code, name string) error {
 }
 
 func (s *steam) login(v url.Values) error {
-	password, ts, err := loginGetRSA(v.Get("username"), v.Get("password"))
+	password, ts, err := s.loginGetRSA(v.Get("username"), v.Get("password"))
 	if err != nil {
 		return err
 	}
 	v.Set("password", password)
 	v.Set("rsatimestamp", ts)
 	v.Set("remember_login", "true")
-	cookies, err := loginDoLogin(v)
+	_, err = s.loginDoLogin(v)
 	if err != nil {
 		return err
 	}
-	s.cookies = cookies
 	return nil
 }
 
-func loginDoLogin(v url.Values) ([]*http.Cookie, error) {
+func (s *steam) loginDoLogin(v url.Values) ([]*http.Cookie, error) {
 
-	resp, err := http.PostForm(urlLoginDoLogin, v)
+	resp, err := s.service.PostForm(urlLoginDoLogin, v)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +129,7 @@ func loginDoLogin(v url.Values) ([]*http.Cookie, error) {
 		return nil, err
 	}
 	if login.Success {
-		cookie, err := login.transfer()
+		cookie, err := s.loginTransfer(login)
 		if err != nil {
 			return nil, err
 		}
@@ -152,9 +151,9 @@ func loginDoLogin(v url.Values) ([]*http.Cookie, error) {
 	}
 }
 
-func loginGetRSA(username, password string) (string, string, error) {
+func (s *steam) loginGetRSA(username, password string) (string, string, error) {
 	u := urlLoginGetRSAKey
-	resp, err := http.PostForm(u, url.Values{"username": {username}})
+	resp, err := s.service.PostForm(u, url.Values{"username": {username}})
 	if err != nil {
 		return "", "", err
 	}
@@ -188,7 +187,7 @@ func (r *jsonLoginGetRSAKey) getPubKey() *rsa.PublicKey {
 	return &rsa.PublicKey{N: mod, E: int(exp)}
 }
 
-func (l *jsonLoginDoLogin) transfer() ([]*http.Cookie, error) {
+func (s *steam) loginTransfer(l *jsonLoginDoLogin) ([]*http.Cookie, error) {
 	p := url.Values{}
 	for k, v := range l.TransferParameters {
 		switch vt := v.(type) {
@@ -202,9 +201,8 @@ func (l *jsonLoginDoLogin) transfer() ([]*http.Cookie, error) {
 			}
 		}
 	}
-	resp, err := http.PostForm(l.TransferURL, p)
+	resp, err := s.service.PostForm(l.TransferURL, p)
 	if err != nil {
-		panic(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
