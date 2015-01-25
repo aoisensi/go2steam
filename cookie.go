@@ -22,6 +22,16 @@ func (s *steam) SetCookies(data []byte) {
 	s.service.Jar.SetCookies(cookieURL, cookies)
 }
 
+func (s *steam) sessionId() (string, error) {
+	cs := s.service.Jar.Cookies(cookieURL)
+	for _, c := range cs {
+		if c.Name == "sessionid" {
+			return url.QueryUnescape(c.Value)
+		}
+	}
+	return "", nil
+}
+
 func initCookie() {
 	cookieURL, _ = url.Parse("https://steamcommunity.com/")
 }
