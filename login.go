@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -70,27 +71,18 @@ type jsonLoginDoLogin struct {
 	RequiresTwofactor bool `json:"requires_twofactor"`
 }
 
-func (s *steam) SetLogin(username, password string) {
-	s.lgnv.Set("username", username)
-	s.lgnv.Set("password", password)
-}
-
-func (s *steam) SetLoginCaptcha(captcha Captcha) {
-	s.lgnv.Set("captchagid", captcha.GetGID())
-	s.lgnv.Set("captcha_text", captcha.GetAnswer())
-}
-
-func (s *steam) SetLoginGuard(code, name string) {
-	s.lgnv.Set("emailauth", code)
-	s.lgnv.Set("loginfriendlyname", name)
-}
-
-func (s *steam) Login() error {
-	v := s.lgnv
-	password, ts, err := s.loginGetRSA(v.Get("username"), v.Get("password"))
+func (s *steam) Login(username, password string, opt LoginOption) error {
+	password, ts, err := s.loginGetRSA(username, password)
 	if err != nil {
 		return err
 	}
+	v := url.Values{}
+	if opt != nil {
+		for vk, vv := range opt {
+			v.Set(vk, vv)
+		}
+	}
+	v.Set("username", username)
 	v.Set("password", password)
 	v.Set("rsatimestamp", ts)
 	v.Set("remember_login", "true")
@@ -135,7 +127,7 @@ func (s *steam) loginDoLogin(v url.Values) ([]*http.Cookie, error) {
 			CaptchaGID: login.CaptchaGID,
 		}
 	default:
-		return nil, errors.New(login.Message)
+		return nil, fmt.Errorf("failed login %v", login)
 	}
 }
 
@@ -164,7 +156,7 @@ func (s *steam) loginGetRSA(username, password string) (string, string, error) {
 		return "", "", err
 	}
 	rp := base64.StdEncoding.EncodeToString(res)
-	return rp, key.Timestamp, err
+	return rp, key.Timestamp, nil
 }
 
 func (r *jsonLoginGetRSAKey) getPubKey() *rsa.PublicKey {
@@ -195,4 +187,19 @@ func (s *steam) loginTransfer(l *jsonLoginDoLogin) ([]*http.Cookie, error) {
 	}
 	defer resp.Body.Close()
 	return resp.Cookies(), nil
+}
+
+type LoginOption map[string]string
+
+func (o LoginOption) SetGuard(code, name string) {
+	o["emailauth"] = code
+	o["loginfriendlyname"] = name
+}
+
+func (o LoginOption) SetCaptcha(captcha Captcha) {
+	if captcha == nil {
+		return
+	}
+	o["captchagid"] = captcha.GetGID()
+	o["captcha_text"] = captcha.GetAnswer()
 }

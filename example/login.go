@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	go2steam ".."
+	go2steam "./.."
 )
 
 const (
@@ -35,13 +35,10 @@ func main() {
 	fmt.Scanln(&user)
 	fmt.Print("Password > ")
 	fmt.Scanln(&pass)
-	steam.SetLogin(user, pass)
 
 	var errl error
+	opt := go2steam.LoginOption{}
 	for {
-		if errl != nil {
-			fmt.Println(errl)
-		}
 		switch errt := errl.(type) {
 		case *go2steam.ErrorLoginCapchaAuth:
 			fmt.Println("Please open url and input Captcha.")
@@ -51,7 +48,7 @@ func main() {
 			var ans string
 			fmt.Scanln(&ans)
 			cap.SetAnswer(ans)
-			steam.SetLoginCaptcha(cap)
+			opt.SetCaptcha(cap)
 		case *go2steam.ErrorLoginEMailAuth:
 			fmt.Printf("Valve sent email to \"%s\" domain.\n", errt.Domain)
 			var code, device string
@@ -59,13 +56,13 @@ func main() {
 			fmt.Scanln(&code)
 			fmt.Print("Device Name > ")
 			fmt.Scanln(&device)
-			steam.SetLoginGuard(code, device)
+			opt.SetGuard(code, device)
 		default:
 			if errl != nil {
 				panic(errl)
 			}
 		}
-		errl = steam.Login()
+		errl = steam.Login(user, pass, opt)
 		if errl == nil {
 			break
 		}

@@ -8,15 +8,12 @@ import (
 
 type steam struct {
 	Steam
-	service http.Client
-	lgnv    url.Values
+	service     http.Client
+	loginValues url.Values
 }
 
 type Steam interface {
-	Login() error
-	SetLogin(string, string)
-	SetLoginCaptcha(Captcha)
-	SetLoginGuard(string, string)
+	Login(string, string, LoginOption) error
 	Cookies() []byte
 	SetCookies([]byte)
 
@@ -28,7 +25,7 @@ func NewSteam() Steam {
 	steam.service = http.Client{}
 	jar, _ := cookiejar.New(nil)
 	steam.service.Jar = jar
-	steam.lgnv = url.Values{}
+	steam.loginValues = url.Values{}
 	return steam
 }
 
