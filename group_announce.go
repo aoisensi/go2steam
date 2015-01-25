@@ -30,7 +30,7 @@ type GroupAnnounces struct {
 func (g *group) Announces(page int) (*GroupAnnounces, error) {
 	var v url.Values
 	if page > 0 {
-		v.Set("p", string(page))
+		v = url.Values{"p": {string(page)}}
 	}
 	doc, err := g.s.htmlGet(fmt.Sprintf(urlGroupAnnounce, g.custom), v)
 	if err != nil {
